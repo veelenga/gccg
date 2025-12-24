@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#0d1117" />
+    <title>GitHub Contributions Games</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="header">
+        <div class="header-content">
+          <a href="#/" class="header-title header-logo">
+            <h1>🎮 GitHub Contributions Games</h1>
+            <p class="subtitle">Classic games with a GitHub twist!</p>
+          </a>
+          <div class="header-actions">
+            <button id="showScoresButton" class="btn btn-header btn-scores">🏆 My Best Scores</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="container">
+        <!-- Game Selection Screen -->
+        <div id="menuScreen" class="screen active">
+          <div class="game-selection">
+            <h2 class="selection-title">Choose Your Game</h2>
+            <div class="game-grid">
+              <div class="game-card" data-game="snake">
+                <div class="game-icon">🐍</div>
+                <h3>Snake</h3>
+                <p>Collect contribution squares!</p>
+                <button class="btn btn-play btn-snake">Play Now</button>
+              </div>
+              <div class="game-card" data-game="tanks">
+                <div class="game-icon">🎯</div>
+                <h3>Battle City</h3>
+                <p>Destroy enemy tanks!</p>
+                <button class="btn btn-play btn-tanks">Play Now</button>
+              </div>
+              <div class="game-card" data-game="breakout">
+                <div class="game-icon">🧱</div>
+                <h3>Breakout</h3>
+                <p>Break all the blocks!</p>
+                <button class="btn btn-play btn-breakout">Play Now</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen">
+          <div class="game-container">
+            <div class="score-panel">
+              <div class="score-display">
+                <div class="label">Score</div>
+                <div id="currentScore" class="value">0</div>
+              </div>
+              <div class="score-divider"></div>
+              <div class="high-score-display">
+                <div class="label">High Score</div>
+                <div id="highScore" class="value">0</div>
+              </div>
+              <div class="score-divider"></div>
+              <div class="speed-display">
+                <div class="label">Speed</div>
+                <div id="speedValue" class="value">1x</div>
+              </div>
+            </div>
+
+            <div class="canvas-container">
+              <canvas id="gameCanvas"></canvas>
+            </div>
+          </div>
+
+          <div class="game-footer">
+            <div class="controls-hint">
+              <span class="key-icon">↑ ↓ ← →</span>
+              <span>or</span>
+              <span class="key-icon">W A S D</span>
+              <span>to move</span>
+              <span class="separator">•</span>
+              <span class="key-icon">Space</span>
+              <span>to pause</span>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Reusable Modal System - Outside game area -->
+      <div id="gameModal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-container">
+          <div class="modal-content">
+            <!-- Content injected dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
