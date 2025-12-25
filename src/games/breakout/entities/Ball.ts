@@ -14,10 +14,10 @@ export class Ball {
   private launched: boolean = false;
   private moveAccumulator: number = 0;
 
-  constructor(x: number, y: number) {
+  constructor(x: number, y: number, speedMultiplier: number = 1) {
     this.x = x;
     this.y = y;
-    this.speed = BALL_SPEED;
+    this.speed = BALL_SPEED * speedMultiplier;
     this.velocityX = Math.cos(BALL_INITIAL_ANGLE);
     this.velocityY = Math.sin(BALL_INITIAL_ANGLE);
   }

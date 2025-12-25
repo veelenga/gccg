@@ -19,13 +19,15 @@ export class SnakeGame extends BaseGame {
   private speed: number;
   private accumulatedTime: number = 0;
   private onSpeedChange?: (speed: number) => void;
+  private speedMultiplier: number;
 
-  constructor(grid: Grid) {
+  constructor(grid: Grid, speedMultiplier: number = 1) {
     super(grid);
+    this.speedMultiplier = speedMultiplier;
     this.snake = new SnakeEntity(grid.config.width, grid.config.height);
     this.availablePositions = this.getAvailablePositions();
     this.foodSquares = new Set<string>();
-    this.speed = INITIAL_SPEED;
+    this.speed = INITIAL_SPEED * speedMultiplier;
     this.spawnInitialFood();
   }
 
@@ -109,7 +111,7 @@ export class SnakeGame extends BaseGame {
     this.foodSquares.clear();
     this.spawnInitialFood();
     this.updateScore(0);
-    this.speed = INITIAL_SPEED;
+    this.speed = INITIAL_SPEED * this.speedMultiplier;
     this.accumulatedTime = 0;
     this.onSpeedChange?.(this.speed);
   }

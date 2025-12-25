@@ -27,9 +27,11 @@ export class TanksGame extends BaseGame {
   private wantToShoot: boolean = false;
   private wantToMove: boolean = false;
   private moveDirection: Direction = DirectionEnum.UP;
+  private speedMultiplier: number;
 
-  constructor(grid: Grid) {
+  constructor(grid: Grid, speedMultiplier: number = 1) {
     super(grid);
+    this.speedMultiplier = speedMultiplier;
 
     const playerSpawn = getPlayerSpawnPosition();
     this.player = new Tank({
@@ -37,7 +39,7 @@ export class TanksGame extends BaseGame {
       direction: DirectionEnum.UP,
       hp: PLAYER_TANK_HP,
       isPlayer: true,
-      moveSpeed: TANK_MOVE_SPEED,
+      moveSpeed: TANK_MOVE_SPEED * speedMultiplier,
     });
 
     this.enemySpawnPositions = getEnemySpawnPositions();
@@ -160,7 +162,7 @@ export class TanksGame extends BaseGame {
       direction: DirectionEnum.DOWN,
       hp: ENEMY_TANK_HP,
       isPlayer: false,
-      moveSpeed: TANK_MOVE_SPEED * 1.5,
+      moveSpeed: TANK_MOVE_SPEED * 1.5 * this.speedMultiplier,
     }));
   }
 

@@ -38,6 +38,10 @@ const ModalType = {
 
 type ModalType = (typeof ModalType)[keyof typeof ModalType];
 
+const MOBILE_BREAKPOINT = 932;
+const MIN_SWIPE_DISTANCE = 30;
+const MOBILE_SPEED_MULTIPLIER = 1.5;
+
 export class UI {
   private currentScreen: Screen;
   private game: BaseGame | null;
@@ -49,7 +53,7 @@ export class UI {
   private currentModal: ModalType | null = null;
   private modalFocusIndex: number = 0;
   private menuFocusIndex: number = 0;
-  private readonly MIN_SWIPE_DISTANCE = 30;
+  private isMobile: boolean = false;
 
   constructor() {
     this.currentScreen = Screen.MENU;
@@ -57,8 +61,21 @@ export class UI {
     this.renderer = null;
     this.currentGameType = GameTypeEnum.SNAKE;
     this.currentUsername = 'Player';
+    this.isMobile = this.detectMobile();
     this.initializeEventListeners();
     this.initializeRouter();
+    this.setupResizeHandler();
+  }
+
+  private detectMobile(): boolean {
+    return window.innerWidth <= MOBILE_BREAKPOINT || 'ontouchstart' in window;
+  }
+
+  private setupResizeHandler(): void {
+    window.addEventListener('resize', () => {
+      this.isMobile = this.detectMobile();
+      this.updateTouchControlsVisibility();
+    });
   }
 
   private initializeRouter(): void {
@@ -99,6 +116,7 @@ export class UI {
     this.showScreen(Screen.MENU);
     this.menuFocusIndex = 0;
     this.updateMenuFocus();
+    this.updateTouchControlsVisibility();
   }
 
   private navigateToGame(gameType: GameType): void {
@@ -118,25 +136,48 @@ export class UI {
   }
 
   private initializeEventListeners(): void {
+    this.initializeGameCardListeners();
+    this.initializeKeyboardListeners();
+    this.initializeCanvasTouchListeners();
+    this.initializeModalListeners();
+    this.initializeTouchControls();
+  }
+
+  private initializeGameCardListeners(): void {
     const gameCards = document.querySelectorAll('.game-card');
     gameCards.forEach((card) => {
+      card.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (!target.classList.contains('btn-play')) {
+          const gameType = card.getAttribute('data-game') as GameType;
+          this.navigate(`/${gameType}` as Route);
+        }
+      });
+
       const playButton = card.querySelector('.btn-play');
       if (playButton) {
-        playButton.addEventListener('click', () => {
+        playButton.addEventListener('click', (e) => {
+          e.stopPropagation();
           const gameType = card.getAttribute('data-game') as GameType;
           this.navigate(`/${gameType}` as Route);
         });
       }
     });
+  }
 
+  private initializeKeyboardListeners(): void {
     document.addEventListener('keydown', (e) => this.handleKeyPress(e));
     document.addEventListener('keyup', (e) => this.handleKeyRelease(e));
+  }
 
+  private initializeCanvasTouchListeners(): void {
     const canvas = this.getElement<HTMLCanvasElement>('gameCanvas');
     canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
     canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
     canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+  }
 
+  private initializeModalListeners(): void {
     const modalBackdrop = document.querySelector('.modal-backdrop');
     if (modalBackdrop) {
       modalBackdrop.addEventListener('click', () => {
@@ -146,6 +187,72 @@ export class UI {
         }
       });
     }
+  }
+
+  private initializeTouchControls(): void {
+    const dpadButtons = document.querySelectorAll('.dpad-btn[data-direction]');
+    dpadButtons.forEach((btn) => {
+      btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const direction = (btn as HTMLElement).dataset.direction as Direction;
+        if (direction && this.game) {
+          this.game.handleInput({ type: 'direction', direction });
+        }
+      });
+      btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        if (this.game && this.currentGameType !== GameTypeEnum.SNAKE) {
+          this.game.handleInput({ type: 'release' });
+        }
+      });
+    });
+
+    const pauseBtn = document.querySelector('.action-pause');
+    if (pauseBtn) {
+      pauseBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (this.currentModal === ModalType.PAUSE) {
+          this.hideModal();
+          this.game?.resume();
+        } else if (!this.currentModal && this.game) {
+          this.game.togglePause();
+        }
+      });
+    }
+
+    const fireBtn = document.querySelector('.action-fire');
+    if (fireBtn) {
+      fireBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (!this.game || this.currentModal) return;
+
+        if (this.currentGameType === GameTypeEnum.TANKS) {
+          this.game.handleInput({ type: 'action', action: 'shoot' });
+        } else if (this.currentGameType === GameTypeEnum.BREAKOUT) {
+          this.game.handleInput({ type: 'action', action: 'launch' });
+        }
+      });
+    }
+  }
+
+  private updateTouchControlsVisibility(): void {
+    const touchControls = document.getElementById('touchControls');
+    if (!touchControls) return;
+
+    const shouldShow = this.isMobile && this.currentScreen === Screen.GAME;
+    touchControls.classList.toggle('active', shouldShow);
+    touchControls.classList.toggle('hidden', !shouldShow);
+
+    this.updateFireButtonVisibility();
+  }
+
+  private updateFireButtonVisibility(): void {
+    const fireBtn = document.querySelector('.action-fire') as HTMLElement;
+    if (!fireBtn) return;
+
+    const showFire = this.currentGameType === GameTypeEnum.TANKS ||
+                     this.currentGameType === GameTypeEnum.BREAKOUT;
+    fireBtn.style.display = showFire ? 'flex' : 'none';
   }
 
   private getElement<T extends HTMLElement = HTMLElement>(id: string): T {
@@ -285,11 +392,13 @@ export class UI {
   private showPauseModal(): void {
     const content = `
       <span class="modal-icon">⏸️</span>
-      <h2 class="modal-title modal-title--info">Paused</h2>
-      <p class="modal-message">Press Space or tap to resume</p>
-      <div class="modal-actions">
-        <button id="modalResumeBtn" class="btn btn-primary">Resume</button>
-        <button id="modalMenuBtn" class="btn btn-tertiary">Menu</button>
+      <div class="modal-body">
+        <h2 class="modal-title modal-title--info">Paused</h2>
+        <p class="modal-message">Tap Resume to continue</p>
+        <div class="modal-actions">
+          <button id="modalResumeBtn" class="btn btn-primary">Resume</button>
+          <button id="modalMenuBtn" class="btn btn-tertiary">Menu</button>
+        </div>
       </div>
     `;
     this.showModal(ModalType.PAUSE, content);
@@ -298,13 +407,14 @@ export class UI {
   private showGameOverModal(score: number): void {
     const content = `
       <span class="modal-icon">💀</span>
-      <h2 class="modal-title modal-title--error">Game Over!</h2>
-      <p class="modal-message">Your Final Score</p>
-      <div class="modal-score">${score}</div>
-      <div class="modal-actions">
-        <button id="modalRestartBtn" class="btn btn-primary">Play Again</button>
-        <button id="modalShareBtn" class="btn btn-secondary">Share on 𝕏</button>
-        <button id="modalMenuBtn" class="btn btn-tertiary">Menu</button>
+      <div class="modal-body">
+        <h2 class="modal-title modal-title--error">Game Over!</h2>
+        <div class="modal-score">${score}</div>
+        <div class="modal-actions">
+          <button id="modalRestartBtn" class="btn btn-primary">Play Again</button>
+          <button id="modalShareBtn" class="btn btn-secondary">Share</button>
+          <button id="modalMenuBtn" class="btn btn-tertiary">Menu</button>
+        </div>
       </div>
     `;
     this.showModal(ModalType.GAME_OVER, content);
@@ -312,7 +422,8 @@ export class UI {
 
   private startSnakeGame(): void {
     const grid = generateSnakeGrid();
-    const game = new SnakeGame(grid);
+    const speedMultiplier = this.isMobile ? MOBILE_SPEED_MULTIPLIER : 1;
+    const game = new SnakeGame(grid, speedMultiplier);
     const canvas = this.getElement<HTMLCanvasElement>('gameCanvas');
     const renderer = new SnakeRenderer(canvas, game);
     this.startGame(game, renderer);
@@ -320,7 +431,8 @@ export class UI {
 
   private startTanksGame(): void {
     const grid = generateTanksGrid();
-    const game = new TanksGame(grid);
+    const speedMultiplier = this.isMobile ? MOBILE_SPEED_MULTIPLIER : 1;
+    const game = new TanksGame(grid, speedMultiplier);
     const canvas = this.getElement<HTMLCanvasElement>('gameCanvas');
     const renderer = new TanksRenderer(canvas, game);
     this.startGame(game, renderer);
@@ -328,7 +440,8 @@ export class UI {
 
   private startBreakoutGame(): void {
     const { grid, blocks } = generateBreakoutGrid();
-    const game = new BreakoutGame(grid, blocks);
+    const speedMultiplier = this.isMobile ? MOBILE_SPEED_MULTIPLIER : 1;
+    const game = new BreakoutGame(grid, blocks, speedMultiplier);
     const canvas = this.getElement<HTMLCanvasElement>('gameCanvas');
     const renderer = new BreakoutRenderer(canvas, game);
     this.startGame(game, renderer);
@@ -350,6 +463,7 @@ export class UI {
     this.updateSpeed(INITIAL_SPEED);
     this.showScreen(Screen.GAME);
     this.hideModal();
+    this.updateTouchControlsVisibility();
 
     this.game.start();
   }
@@ -533,7 +647,7 @@ export class UI {
     const absDeltaX = Math.abs(deltaX);
     const absDeltaY = Math.abs(deltaY);
 
-    if (absDeltaX < this.MIN_SWIPE_DISTANCE && absDeltaY < this.MIN_SWIPE_DISTANCE) {
+    if (absDeltaX < MIN_SWIPE_DISTANCE && absDeltaY < MIN_SWIPE_DISTANCE) {
       if (this.currentModal === ModalType.PAUSE) {
         this.hideModal();
         this.game.resume();

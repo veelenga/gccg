@@ -13,9 +13,11 @@ export class BreakoutGame extends BaseGame {
   private blocks: Block[];
   private lives: number;
   private moveDirection: Direction | null = null;
+  private speedMultiplier: number;
 
-  constructor(grid: Grid, blocks: Block[]) {
+  constructor(grid: Grid, blocks: Block[], speedMultiplier: number = 1) {
     super(grid);
+    this.speedMultiplier = speedMultiplier;
     this.paddle = new Paddle();
     this.ball = this.createBall();
     this.blocks = blocks;
@@ -24,7 +26,7 @@ export class BreakoutGame extends BaseGame {
 
   private createBall(): Ball {
     const paddleCenter = Math.floor(BREAKOUT_GRID_WIDTH / 2);
-    return new Ball(paddleCenter, PADDLE_Y - 1);
+    return new Ball(paddleCenter, PADDLE_Y - 1, this.speedMultiplier);
   }
 
   protected update(deltaTime: number): void {

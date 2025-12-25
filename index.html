@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#0d1117" />
@@ -103,6 +103,34 @@
           <div class="modal-content">
             <!-- Content injected dynamically -->
           </div>
+        </div>
+      </div>
+
+      <!-- Portrait Orientation Overlay -->
+      <div id="portraitOverlay" class="portrait-overlay">
+        <div class="portrait-content">
+          <div class="rotate-icon">📱</div>
+          <h2>Rotate Your Device</h2>
+          <p>Please rotate to landscape mode for the best gaming experience</p>
+          <div class="rotate-animation">
+            <span class="device-icon">📱</span>
+            <span class="arrow-icon">↻</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Touch Controls Overlay -->
+      <div id="touchControls" class="touch-controls hidden">
+        <div class="touch-dpad">
+          <button class="dpad-btn dpad-up" data-direction="UP">▲</button>
+          <button class="dpad-btn dpad-left" data-direction="LEFT">◀</button>
+          <button class="dpad-btn dpad-center"></button>
+          <button class="dpad-btn dpad-right" data-direction="RIGHT">▶</button>
+          <button class="dpad-btn dpad-down" data-direction="DOWN">▼</button>
+        </div>
+        <div class="touch-actions">
+          <button class="action-btn action-pause" data-action="pause">⏸</button>
+          <button class="action-btn action-fire" data-action="fire">🔥</button>
         </div>
       </div>
     </div>
