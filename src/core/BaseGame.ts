@@ -2,11 +2,6 @@ import type { GameState, GameInput } from './types';
 import { GameState as GameStateEnum } from './types';
 import type { Grid } from './Grid';
 
-/**
- * Abstract base class for all games.
- * Implements Template Method pattern for game loop and state management.
- * Concrete games extend this and implement game-specific logic.
- */
 export abstract class BaseGame {
   protected grid: Grid;
   protected state: GameState;
@@ -14,7 +9,6 @@ export abstract class BaseGame {
   protected lastUpdateTime: number;
   protected animationFrameId: number | null;
 
-  // Callbacks for UI updates
   protected onScoreChange?: (score: number) => void;
   protected onGameOver?: (score: number) => void;
   protected onStateChange?: (state: GameState) => void;
@@ -27,11 +21,9 @@ export abstract class BaseGame {
     this.animationFrameId = null;
   }
 
-  // Abstract methods that concrete games must implement
   protected abstract update(deltaTime: number): void;
   protected abstract reset(): void;
 
-  // Template method for game loop
   protected gameLoop = (): void => {
     const currentTime = performance.now();
     const deltaTime = currentTime - this.lastUpdateTime;
@@ -44,7 +36,6 @@ export abstract class BaseGame {
     }
   };
 
-  // Common lifecycle methods
   start(): void {
     if (this.state === GameStateEnum.READY || this.state === GameStateEnum.GAME_OVER) {
       this.reset();
@@ -90,19 +81,13 @@ export abstract class BaseGame {
     }
   }
 
-  // Input handling - can be overridden by concrete games
-  handleInput(_input: GameInput): void {
-    // Default implementation does nothing
-    // Concrete games override this for specific input handling
-  }
+  handleInput(_input: GameInput): void {}
 
-  // Protected helper for updating score
   protected updateScore(newScore: number): void {
     this.score = newScore;
     this.onScoreChange?.(this.score);
   }
 
-  // Protected helper for ending game
   protected endGame(): void {
     this.state = GameStateEnum.GAME_OVER;
     this.onStateChange?.(this.state);
@@ -113,7 +98,6 @@ export abstract class BaseGame {
     this.onGameOver?.(this.score);
   }
 
-  // Getters
   getState(): GameState {
     return this.state;
   }
@@ -126,7 +110,6 @@ export abstract class BaseGame {
     return this.grid;
   }
 
-  // Callback setters
   setOnScoreChange(callback: (score: number) => void): void {
     this.onScoreChange = callback;
   }

@@ -4,10 +4,6 @@ import { Direction as DirectionEnum } from '../../core/types';
 const INITIAL_SNAKE_LENGTH = 3;
 const MAX_DIRECTION_QUEUE_SIZE = 2;
 
-/**
- * Snake entity responsible for movement, collision, and growth logic.
- * Follows Single Responsibility Principle - only manages snake behavior.
- */
 export class SnakeEntity {
   private body: Position[];
   private direction: Direction;
@@ -52,7 +48,6 @@ export class SnakeEntity {
   }
 
   setDirection(newDirection: Direction): void {
-    // Check against the last queued direction or next direction
     const checkDirection =
       this.directionQueue.length > 0
         ? this.directionQueue[this.directionQueue.length - 1]
@@ -62,7 +57,6 @@ export class SnakeEntity {
       return;
     }
 
-    // Set immediately if queue is empty for instant response
     if (this.directionQueue.length === 0) {
       this.nextDirection = newDirection;
     } else if (this.directionQueue.length < MAX_DIRECTION_QUEUE_SIZE) {

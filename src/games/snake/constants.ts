@@ -1,5 +1,3 @@
-// Snake game specific constants
-
 export const SNAKE_GRID_WIDTH = 52;
 export const SNAKE_GRID_HEIGHT = 7;
 export const SNAKE_CELL_SIZE = 32;

@@ -8,11 +8,6 @@ import {
   SNAKE_CELL_GAP,
 } from './constants';
 
-/**
- * Generates a Snake-appropriate grid with contribution-style pattern.
- * Target: 80%+ playable squares for maximum snake movement.
- * Distribution: [10%, 15%, 25%, 25%, 25%] for levels [0-4]
- */
 export function generateSnakeGrid(): Grid {
   const config: GridConfig = {
     width: SNAKE_GRID_WIDTH,
@@ -43,8 +38,6 @@ export function generateSnakeGrid(): Grid {
 
 function getSnakeContributionLevel(): number {
   const random = Math.random();
-
-  // 10% empty, 90% playable
   if (random < 0.1) return 0;
   if (random < 0.25) return 1;
   if (random < 0.5) return 2;

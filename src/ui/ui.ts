@@ -5,11 +5,16 @@ import { Direction as DirectionEnum, GameType as GameTypeEnum } from '../core/ty
 import { SnakeGame } from '../games/snake/SnakeGame';
 import { SnakeRenderer } from '../games/snake/SnakeRenderer';
 import { generateSnakeGrid } from '../games/snake/gridGenerator';
-import { saveScore, getHighScores, getHighestScore } from '../services/scoreStorage';
+import { TanksGame } from '../games/tanks/TanksGame';
+import { TanksRenderer } from '../games/tanks/TanksRenderer';
+import { generateTanksGrid } from '../games/tanks/gridGenerator';
+import { BreakoutGame } from '../games/breakout/BreakoutGame';
+import { BreakoutRenderer } from '../games/breakout/BreakoutRenderer';
+import { generateBreakoutGrid } from '../games/breakout/gridGenerator';
+import { saveScore, getHighestScore } from '../services/scoreStorage';
 import { shareToTwitter } from '../services/twitterShare';
 import { INITIAL_SPEED } from '../games/snake/constants';
 
-// Route definitions
 const Route = {
   MENU: '/',
   SNAKE: '/snake',
@@ -29,7 +34,6 @@ type Screen = (typeof Screen)[keyof typeof Screen];
 const ModalType = {
   PAUSE: 'pause',
   GAME_OVER: 'gameOver',
-  SCOREBOARD: 'scoreboard',
 } as const;
 
 type ModalType = (typeof ModalType)[keyof typeof ModalType];
@@ -43,6 +47,8 @@ export class UI {
   private touchStartX: number = 0;
   private touchStartY: number = 0;
   private currentModal: ModalType | null = null;
+  private modalFocusIndex: number = 0;
+  private menuFocusIndex: number = 0;
   private readonly MIN_SWIPE_DISTANCE = 30;
 
   constructor() {
@@ -55,15 +61,8 @@ export class UI {
     this.initializeRouter();
   }
 
-  // ============================================
-  // ROUTING
-  // ============================================
-
   private initializeRouter(): void {
-    // Handle initial route
     this.handleRoute();
-
-    // Listen for hash changes
     window.addEventListener('hashchange', () => this.handleRoute());
   }
 
@@ -98,6 +97,8 @@ export class UI {
     }
     this.hideModal();
     this.showScreen(Screen.MENU);
+    this.menuFocusIndex = 0;
+    this.updateMenuFocus();
   }
 
   private navigateToGame(gameType: GameType): void {
@@ -117,7 +118,6 @@ export class UI {
   }
 
   private initializeEventListeners(): void {
-    // Game selection - find all game cards (use routing)
     const gameCards = document.querySelectorAll('.game-card');
     gameCards.forEach((card) => {
       const playButton = card.querySelector('.btn-play');
@@ -129,19 +129,14 @@ export class UI {
       }
     });
 
-    // Header scoreboard button
-    this.getElement('showScoresButton').addEventListener('click', () => this.showScoreboardModal());
-
-    // Keyboard input
     document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+    document.addEventListener('keyup', (e) => this.handleKeyRelease(e));
 
-    // Touch/swipe controls for mobile
     const canvas = this.getElement<HTMLCanvasElement>('gameCanvas');
     canvas.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
     canvas.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
     canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 
-    // Modal backdrop click to close (for pause only)
     const modalBackdrop = document.querySelector('.modal-backdrop');
     if (modalBackdrop) {
       modalBackdrop.addEventListener('click', () => {
@@ -171,53 +166,108 @@ export class UI {
     this.currentScreen = screen;
   }
 
-  // ============================================
-  // MODAL SYSTEM
-  // ============================================
-
-  private showModal(type: ModalType, content: string, wide: boolean = false): void {
+  private showModal(type: ModalType, content: string): void {
     const modal = this.getElement('gameModal');
-    const container = modal.querySelector('.modal-container');
     const contentEl = modal.querySelector('.modal-content');
 
-    if (container && contentEl) {
-      container.classList.toggle('modal-container--wide', wide);
+    if (contentEl) {
       contentEl.innerHTML = content;
     }
 
     modal.classList.remove('hidden');
     this.currentModal = type;
+    this.modalFocusIndex = 0;
 
-    // Attach event listeners for modal buttons
     this.attachModalEventListeners();
+    this.updateModalFocus();
   }
 
   private hideModal(): void {
     const modal = this.getElement('gameModal');
     modal.classList.add('hidden');
     this.currentModal = null;
+    this.modalFocusIndex = 0;
+  }
+
+  private getModalButtons(): HTMLButtonElement[] {
+    const modal = this.getElement('gameModal');
+    return Array.from(modal.querySelectorAll('.modal-actions .btn')) as HTMLButtonElement[];
+  }
+
+  private updateModalFocus(): void {
+    const buttons = this.getModalButtons();
+    buttons.forEach((btn, index) => {
+      btn.classList.toggle('btn-focused', index === this.modalFocusIndex);
+    });
+  }
+
+  private handleModalNavigation(direction: 'left' | 'right'): void {
+    const buttons = this.getModalButtons();
+    if (buttons.length === 0) return;
+
+    if (direction === 'left') {
+      this.modalFocusIndex = (this.modalFocusIndex - 1 + buttons.length) % buttons.length;
+    } else {
+      this.modalFocusIndex = (this.modalFocusIndex + 1) % buttons.length;
+    }
+    this.updateModalFocus();
+  }
+
+  private activateFocusedModalButton(): void {
+    const buttons = this.getModalButtons();
+    if (buttons[this.modalFocusIndex]) {
+      buttons[this.modalFocusIndex].click();
+    }
+  }
+
+  private getGameCards(): HTMLElement[] {
+    return Array.from(document.querySelectorAll('.game-card')) as HTMLElement[];
+  }
+
+  private updateMenuFocus(): void {
+    const cards = this.getGameCards();
+    cards.forEach((card, index) => {
+      card.classList.toggle('game-card-focused', index === this.menuFocusIndex);
+    });
+  }
+
+  private handleMenuNavigation(direction: 'left' | 'right'): void {
+    const cards = this.getGameCards();
+    if (cards.length === 0) return;
+
+    if (direction === 'left') {
+      this.menuFocusIndex = (this.menuFocusIndex - 1 + cards.length) % cards.length;
+    } else {
+      this.menuFocusIndex = (this.menuFocusIndex + 1) % cards.length;
+    }
+    this.updateMenuFocus();
+  }
+
+  private activateFocusedGameCard(): void {
+    const cards = this.getGameCards();
+    const card = cards[this.menuFocusIndex];
+    if (card) {
+      const gameType = card.getAttribute('data-game') as GameType;
+      this.navigate(`/${gameType}` as Route);
+    }
   }
 
   private attachModalEventListeners(): void {
-    // Restart button
     const restartBtn = document.getElementById('modalRestartBtn');
     if (restartBtn) {
       restartBtn.onclick = () => this.handleRestart();
     }
 
-    // Share button
     const shareBtn = document.getElementById('modalShareBtn');
     if (shareBtn) {
       shareBtn.onclick = () => this.handleShare();
     }
 
-    // Menu button
     const menuBtn = document.getElementById('modalMenuBtn');
     if (menuBtn) {
       menuBtn.onclick = () => this.handleBackToMenu();
     }
 
-    // Resume button (for pause modal)
     const resumeBtn = document.getElementById('modalResumeBtn');
     if (resumeBtn) {
       resumeBtn.onclick = () => {
@@ -226,7 +276,6 @@ export class UI {
       };
     }
 
-    // Close button (for scoreboard)
     const closeBtn = document.getElementById('modalCloseBtn');
     if (closeBtn) {
       closeBtn.onclick = () => this.hideModal();
@@ -261,44 +310,6 @@ export class UI {
     this.showModal(ModalType.GAME_OVER, content);
   }
 
-  private showScoreboardModal(): void {
-    const scores = getHighScores(this.currentGameType);
-
-    let scoreListHtml: string;
-    if (scores.length === 0) {
-      scoreListHtml = '<div class="empty-state">No scores yet. Play your first game!</div>';
-    } else {
-      scoreListHtml = `
-        <div class="score-list">
-          ${scores.map((entry, index) => `
-            <div class="score-item">
-              <span class="rank">#${index + 1}</span>
-              <div class="details">
-                <span class="score">${entry.score}</span>
-                <span class="date">${entry.date}</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
-    }
-
-    const content = `
-      <span class="modal-icon">🏆</span>
-      <h2 class="modal-title modal-title--info">Best Scores</h2>
-      <p class="modal-message">Your top 10 performances</p>
-      ${scoreListHtml}
-      <div class="modal-actions">
-        <button id="modalCloseBtn" class="btn btn-tertiary">Close</button>
-      </div>
-    `;
-    this.showModal(ModalType.SCOREBOARD, content, true);
-  }
-
-  // ============================================
-  // GAME START METHODS
-  // ============================================
-
   private startSnakeGame(): void {
     const grid = generateSnakeGrid();
     const game = new SnakeGame(grid);
@@ -308,15 +319,19 @@ export class UI {
   }
 
   private startTanksGame(): void {
-    // TODO: Implement Tanks game
-    alert('Tanks game coming soon!');
-    this.navigate(Route.MENU);
+    const grid = generateTanksGrid();
+    const game = new TanksGame(grid);
+    const canvas = this.getElement<HTMLCanvasElement>('gameCanvas');
+    const renderer = new TanksRenderer(canvas, game);
+    this.startGame(game, renderer);
   }
 
   private startBreakoutGame(): void {
-    // TODO: Implement Breakout game
-    alert('Breakout game coming soon!');
-    this.navigate(Route.MENU);
+    const { grid, blocks } = generateBreakoutGrid();
+    const game = new BreakoutGame(grid, blocks);
+    const canvas = this.getElement<HTMLCanvasElement>('gameCanvas');
+    const renderer = new BreakoutRenderer(canvas, game);
+    this.startGame(game, renderer);
   }
 
   private startGame(game: BaseGame, renderer: BaseRenderer): void {
@@ -347,10 +362,6 @@ export class UI {
     this.game.setOnStateChange((state) => this.handleStateChange(state));
   }
 
-  // ============================================
-  // SCORE & SPEED DISPLAY
-  // ============================================
-
   private updateScore(score: number): void {
     this.getElement('currentScore').textContent = score.toString();
   }
@@ -364,10 +375,6 @@ export class UI {
     const speedMultiplier = (INITIAL_SPEED / speed).toFixed(1);
     this.getElement('speedValue').textContent = `${speedMultiplier}x`;
   }
-
-  // ============================================
-  // GAME EVENT HANDLERS
-  // ============================================
 
   private handleGameOver(score: number): void {
     saveScore(score, this.currentUsername, this.currentGameType);
@@ -405,28 +412,48 @@ export class UI {
     });
   }
 
-  // ============================================
-  // INPUT HANDLING
-  // ============================================
-
   private handleKeyPress(event: KeyboardEvent): void {
-    // Handle modal close on Escape
-    if (event.key === 'Escape' && this.currentModal) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
       if (this.currentModal === ModalType.PAUSE) {
         this.hideModal();
         this.game?.resume();
-      } else if (this.currentModal === ModalType.SCOREBOARD) {
-        this.hideModal();
+        return;
+      }
+      if (this.currentScreen === Screen.GAME && this.game && !this.currentModal) {
+        this.game.togglePause();
+        return;
+      }
+      return;
+    }
+
+    if (this.currentModal) {
+      event.preventDefault();
+      if (event.key === 'ArrowLeft' || event.key === 'a' || event.key === 'A') {
+        this.handleModalNavigation('left');
+      } else if (event.key === 'ArrowRight' || event.key === 'd' || event.key === 'D') {
+        this.handleModalNavigation('right');
+      } else if (event.key === 'Enter' || event.key === ' ') {
+        this.activateFocusedModalButton();
+      }
+      return;
+    }
+
+    if (this.currentScreen === Screen.MENU) {
+      if (event.key === 'ArrowLeft' || event.key === 'a' || event.key === 'A') {
+        event.preventDefault();
+        this.handleMenuNavigation('left');
+      } else if (event.key === 'ArrowRight' || event.key === 'd' || event.key === 'D') {
+        event.preventDefault();
+        this.handleMenuNavigation('right');
+      } else if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        this.activateFocusedGameCard();
       }
       return;
     }
 
     if (this.currentScreen !== Screen.GAME || !this.game) {
-      return;
-    }
-
-    // Don't process game input if modal is open (except for resume)
-    if (this.currentModal && this.currentModal !== ModalType.PAUSE) {
       return;
     }
 
@@ -453,11 +480,31 @@ export class UI {
 
     if (event.key === ' ') {
       event.preventDefault();
-      if (this.currentModal === ModalType.PAUSE) {
-        this.hideModal();
-        this.game.resume();
-      } else {
-        this.game.togglePause();
+      if (this.currentGameType === GameTypeEnum.TANKS) {
+        this.game.handleInput({ type: 'action', action: 'shoot' });
+      } else if (this.currentGameType === GameTypeEnum.BREAKOUT) {
+        this.game.handleInput({ type: 'action', action: 'launch' });
+      }
+    }
+  }
+
+  private handleKeyRelease(event: KeyboardEvent): void {
+    if (this.currentScreen !== Screen.GAME || !this.game) {
+      return;
+    }
+
+    if (this.currentGameType === GameTypeEnum.BREAKOUT) {
+      const releaseKeys = ['ArrowLeft', 'ArrowRight', 'a', 'A', 'd', 'D'];
+      if (releaseKeys.includes(event.key)) {
+        this.game.handleInput({ type: 'release' });
+      }
+      return;
+    }
+
+    if (this.currentGameType === GameTypeEnum.TANKS) {
+      const releaseKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'W', 's', 'S', 'a', 'A', 'd', 'D'];
+      if (releaseKeys.includes(event.key)) {
+        this.game.handleInput({ type: 'release' });
       }
     }
   }
@@ -486,9 +533,7 @@ export class UI {
     const absDeltaX = Math.abs(deltaX);
     const absDeltaY = Math.abs(deltaY);
 
-    // Check if swipe is long enough
     if (absDeltaX < this.MIN_SWIPE_DISTANCE && absDeltaY < this.MIN_SWIPE_DISTANCE) {
-      // Tap - toggle pause or resume
       if (this.currentModal === ModalType.PAUSE) {
         this.hideModal();
         this.game.resume();
@@ -498,20 +543,13 @@ export class UI {
       return;
     }
 
-    // Don't process swipes if modal is open
     if (this.currentModal) {
       return;
     }
 
-    // Determine swipe direction
-    let direction: Direction;
-    if (absDeltaX > absDeltaY) {
-      // Horizontal swipe
-      direction = deltaX > 0 ? DirectionEnum.RIGHT : DirectionEnum.LEFT;
-    } else {
-      // Vertical swipe
-      direction = deltaY > 0 ? DirectionEnum.DOWN : DirectionEnum.UP;
-    }
+    const direction: Direction = absDeltaX > absDeltaY
+      ? (deltaX > 0 ? DirectionEnum.RIGHT : DirectionEnum.LEFT)
+      : (deltaY > 0 ? DirectionEnum.DOWN : DirectionEnum.UP);
 
     this.game.handleInput({ type: 'direction', direction });
   }

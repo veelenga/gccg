@@ -4,16 +4,24 @@ import type { Position } from '../../core/types';
 import { COLOR_LEVELS } from '../../core/constants';
 import { COLOR_SNAKE_HEAD, COLOR_SNAKE_BODY } from './constants';
 
-/**
- * Snake-specific renderer extending BaseRenderer.
- * Handles rendering of contribution grid, food, and snake segments.
- */
+const MAX_SNAKE_LENGTH_CACHE = 100;
+
 export class SnakeRenderer extends BaseRenderer {
   private snakeGame: SnakeGame;
+  private snakeColorCache: string[] = [];
 
   constructor(canvas: HTMLCanvasElement, game: SnakeGame) {
     super(canvas, game);
     this.snakeGame = game;
+    this.initSnakeColorCache();
+  }
+
+  private initSnakeColorCache(): void {
+    this.snakeColorCache = [COLOR_SNAKE_HEAD];
+    for (let i = 1; i < MAX_SNAKE_LENGTH_CACHE; i++) {
+      const factor = i / (MAX_SNAKE_LENGTH_CACHE - 1);
+      this.snakeColorCache.push(this.interpolateColor(COLOR_SNAKE_HEAD, COLOR_SNAKE_BODY, factor));
+    }
   }
 
   protected renderGame(): void {
@@ -29,42 +37,44 @@ export class SnakeRenderer extends BaseRenderer {
     cells.forEach((row) => {
       row.forEach((cell) => {
         const isFood = foodSquares.has(this.positionToKey(cell.position));
-        this.drawCell(cell.position, COLOR_LEVELS[cell.level]);
 
         if (isFood && cell.level > 0) {
-          this.drawFoodGlow(cell.position);
+          this.drawFoodCell(cell.position, cell.level);
+        } else {
+          this.drawCell(cell.position, COLOR_LEVELS[cell.level]);
         }
       });
     });
   }
 
-  private drawFoodGlow(pos: Position): void {
-    const gridConfig = this.snakeGame.getGrid().config;
-    const effectiveSize = gridConfig.cellSize + gridConfig.gap;
-    const x = pos.x * effectiveSize;
-    const y = pos.y * effectiveSize;
+  private drawFoodCell(pos: Position, level: number): void {
+    const x = pos.x * this.effectiveSize;
+    const y = pos.y * this.effectiveSize;
+    const size = this.gridConfig.cellSize;
+    const radius = Math.min(3, size / 8);
 
-    const time = Date.now() / 1000;
-    const pulse = Math.sin(time * 5) * 0.5 + 0.5;
+    const time = this.renderTime / 1000;
+    const pulse = Math.sin(time * 4) * 0.3 + 0.7;
+
+    this.ctx.fillStyle = COLOR_LEVELS[level];
+    this.ctx.beginPath();
+    this.ctx.roundRect(x, y, size, size, radius);
+    this.ctx.fill();
 
     this.ctx.save();
+    this.ctx.shadowBlur = 15 * pulse;
+    this.ctx.shadowColor = '#ffd700';
 
-    this.ctx.shadowBlur = 25;
-    this.ctx.shadowColor = '#ffcc00';
-    this.ctx.fillStyle = '#ffdd33';
-    this.ctx.fillRect(x, y, gridConfig.cellSize, gridConfig.cellSize);
+    this.ctx.fillStyle = `rgba(255, 215, 0, ${0.4 * pulse})`;
+    this.ctx.beginPath();
+    this.ctx.roundRect(x, y, size, size, radius);
+    this.ctx.fill();
 
-    this.ctx.strokeStyle = '#ffee66';
-    this.ctx.lineWidth = 4;
-    this.ctx.globalAlpha = 0.8 + pulse * 0.2;
-    this.ctx.strokeRect(x + 2, y + 2, gridConfig.cellSize - 4, gridConfig.cellSize - 4);
-
-    this.ctx.shadowBlur = 40 * pulse;
-    this.ctx.shadowColor = '#ffaa00';
-    this.ctx.strokeStyle = '#ffffff';
-    this.ctx.lineWidth = 3;
-    this.ctx.globalAlpha = pulse;
-    this.ctx.strokeRect(x, y, gridConfig.cellSize, gridConfig.cellSize);
+    this.ctx.strokeStyle = `rgba(255, 238, 102, ${0.6 + pulse * 0.4})`;
+    this.ctx.lineWidth = 2;
+    this.ctx.beginPath();
+    this.ctx.roundRect(x + 1, y + 1, size - 2, size - 2, radius);
+    this.ctx.stroke();
 
     this.ctx.restore();
   }
@@ -73,36 +83,93 @@ export class SnakeRenderer extends BaseRenderer {
     const snake = this.snakeGame.getSnake();
     const body = snake.getBody();
 
-    body.forEach((segment, index) => {
-      const isHead = index === 0;
-      this.drawSnakeSegment(segment, isHead);
-    });
+    for (let i = body.length - 1; i >= 0; i--) {
+      const isHead = i === 0;
+      const isTail = i === body.length - 1;
+      this.drawSnakeSegment(body[i], isHead, isTail, i, body.length);
+    }
   }
 
-  private drawSnakeSegment(position: Position, isHead: boolean): void {
-    const gridConfig = this.snakeGame.getGrid().config;
-    const effectiveSize = gridConfig.cellSize + gridConfig.gap;
-    const pixelX = position.x * effectiveSize;
-    const pixelY = position.y * effectiveSize;
+  private drawSnakeSegment(
+    position: Position,
+    isHead: boolean,
+    isTail: boolean,
+    index: number,
+    totalLength: number
+  ): void {
+    const x = position.x * this.effectiveSize;
+    const y = position.y * this.effectiveSize;
+    const size = this.gridConfig.cellSize;
+    const radius = Math.min(4, size / 6);
 
-    this.ctx.fillStyle = isHead ? COLOR_SNAKE_HEAD : COLOR_SNAKE_BODY;
+    const cacheIndex = Math.min(
+      Math.floor((index / Math.max(1, totalLength - 1)) * (MAX_SNAKE_LENGTH_CACHE - 1)),
+      MAX_SNAKE_LENGTH_CACHE - 1
+    );
+    const color = isHead ? COLOR_SNAKE_HEAD : this.snakeColorCache[cacheIndex];
+
+    const segmentSize = isTail ? size - 4 : size;
+    const offset = isTail ? 2 : 0;
+
+    this.ctx.save();
 
     if (isHead) {
-      this.ctx.shadowBlur = 10;
+      this.ctx.shadowBlur = 12;
       this.ctx.shadowColor = COLOR_SNAKE_HEAD;
     }
 
-    this.ctx.fillRect(pixelX, pixelY, gridConfig.cellSize, gridConfig.cellSize);
+    this.ctx.fillStyle = color;
+    this.ctx.beginPath();
+    this.ctx.roundRect(x + offset, y + offset, segmentSize, segmentSize, radius);
+    this.ctx.fill();
 
     if (isHead) {
-      this.ctx.shadowBlur = 0;
-      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-      this.ctx.fillRect(
-        pixelX + 2,
-        pixelY + 2,
-        gridConfig.cellSize - 4,
-        gridConfig.cellSize - 4
-      );
+      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+      this.ctx.beginPath();
+      this.ctx.roundRect(x + 3, y + 3, size - 6, size / 2 - 2, radius / 2);
+      this.ctx.fill();
+
+      this.drawSnakeEyes(x, y, size);
     }
+
+    this.ctx.restore();
+  }
+
+  private drawSnakeEyes(x: number, y: number, size: number): void {
+    const snake = this.snakeGame.getSnake();
+    const direction = snake.getDirection();
+
+    const eyeSize = Math.max(3, size / 8);
+    const eyeOffset = size / 4;
+
+    let leftEye = { x: x + eyeOffset, y: y + eyeOffset };
+    let rightEye = { x: x + size - eyeOffset - eyeSize, y: y + eyeOffset };
+
+    switch (direction) {
+      case 'DOWN':
+        leftEye = { x: x + eyeOffset, y: y + size - eyeOffset - eyeSize };
+        rightEye = { x: x + size - eyeOffset - eyeSize, y: y + size - eyeOffset - eyeSize };
+        break;
+      case 'LEFT':
+        leftEye = { x: x + eyeOffset, y: y + eyeOffset };
+        rightEye = { x: x + eyeOffset, y: y + size - eyeOffset - eyeSize };
+        break;
+      case 'RIGHT':
+        leftEye = { x: x + size - eyeOffset - eyeSize, y: y + eyeOffset };
+        rightEye = { x: x + size - eyeOffset - eyeSize, y: y + size - eyeOffset - eyeSize };
+        break;
+    }
+
+    this.ctx.fillStyle = '#ffffff';
+    this.ctx.beginPath();
+    this.ctx.arc(leftEye.x + eyeSize / 2, leftEye.y + eyeSize / 2, eyeSize, 0, Math.PI * 2);
+    this.ctx.arc(rightEye.x + eyeSize / 2, rightEye.y + eyeSize / 2, eyeSize, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    this.ctx.fillStyle = '#1a1a1a';
+    this.ctx.beginPath();
+    this.ctx.arc(leftEye.x + eyeSize / 2, leftEye.y + eyeSize / 2, eyeSize / 2, 0, Math.PI * 2);
+    this.ctx.arc(rightEye.x + eyeSize / 2, rightEye.y + eyeSize / 2, eyeSize / 2, 0, Math.PI * 2);
+    this.ctx.fill();
   }
 }

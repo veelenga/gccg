@@ -17,7 +17,6 @@ export class Tank {
   private maxHp: number;
   private isPlayer: boolean;
   private moveSpeed: number;
-  private lastMoveTime: number = 0;
   private lastShootTime: number = 0;
   private moveAccumulator: number = 0;
 
@@ -102,7 +101,6 @@ export class Tank {
 
   shoot(currentTime: number): Position {
     this.lastShootTime = currentTime;
-    // Bullet spawns one cell in front of the tank
     return this.getNextPosition();
   }
 
@@ -114,7 +112,6 @@ export class Tank {
     this.position = { ...position };
     this.direction = DirectionEnum.UP;
     this.hp = this.maxHp;
-    this.lastMoveTime = 0;
     this.lastShootTime = 0;
     this.moveAccumulator = 0;
   }

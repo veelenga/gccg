@@ -12,11 +12,6 @@ import {
   MAX_FOOD_ON_BOARD,
 } from './constants';
 
-/**
- * Snake game implementation extending BaseGame.
- * Manages snake movement, food spawning, collision detection, and scoring.
- * Follows Single Responsibility Principle - only contains Snake-specific game logic.
- */
 export class SnakeGame extends BaseGame {
   private snake: SnakeEntity;
   private availablePositions: Position[];
@@ -125,7 +120,6 @@ export class SnakeGame extends BaseGame {
     }
   }
 
-  // Public getters for renderer
   getSnake(): SnakeEntity {
     return this.snake;
   }

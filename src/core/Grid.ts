@@ -1,9 +1,5 @@
 import type { Position, GridCell, GridConfig, CellType } from './types';
 
-/**
- * Flexible grid system supporting different dimensions and cell types per game.
- * Provides utilities for cell access, validation, and filtering.
- */
 export class Grid {
   private cells: GridCell[][];
   public readonly config: GridConfig;

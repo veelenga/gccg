@@ -90,41 +90,6 @@ body {
   font-size: 1rem;
 }
 
-.header-actions {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.btn-header {
-  color: white;
-  padding: 1rem 2rem;
-  font-size: 1.125rem;
-  white-space: nowrap;
-}
-
-.btn-new-game {
-  background: var(--secondary-color);
-  box-shadow: 0 4px 12px rgba(110, 64, 201, 0.3);
-}
-
-.btn-new-game:hover {
-  background: var(--secondary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(110, 64, 201, 0.4);
-}
-
-.btn-scores {
-  background: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(46, 164, 79, 0.3);
-}
-
-.btn-scores:hover {
-  background: var(--primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(46, 164, 79, 0.4);
-}
-
 .container {
   flex: 1;
   max-width: 1980px;
@@ -301,6 +266,13 @@ input[type="text"]::placeholder {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none !important;
+}
+
+.btn-focused {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
 }
 
 .divider {
@@ -557,105 +529,10 @@ input[type="text"]::placeholder {
   justify-content: center;
 }
 
-/* Wider modal variant for scoreboard */
-.modal-container--wide {
-  max-width: 600px;
-}
-
-/* Score list in modal */
-.modal .score-list {
-  max-height: 300px;
-  overflow-y: auto;
-  margin: 1rem 0 1.5rem;
-  padding: 0;
-  text-align: left;
-}
-
-.score-list {
-  max-height: 300px;
-  overflow-y: auto;
-  margin-bottom: 1.5rem;
-}
-
-.score-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.score-list::-webkit-scrollbar-track {
-  background: var(--bg-dark);
-  border-radius: 3px;
-}
-
-.score-list::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 3px;
-}
-
-.score-list::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-color);
-}
-
-.score-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.875rem 1rem;
-  margin-bottom: 0.5rem;
-  background: var(--bg-dark);
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  transition: all 0.2s ease;
-}
-
-.score-item:hover {
-  border-color: var(--primary-color);
-  transform: translateX(3px);
-}
-
-.score-item .rank {
-  font-weight: 700;
-  font-size: 1.125rem;
-  color: var(--primary-color);
-  margin-right: 1rem;
-  min-width: 2rem;
-}
-
-.score-item .details {
-  flex: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
-
-.score-item .score {
-  font-weight: 700;
-  font-size: 1.5rem;
-  color: var(--success-color);
-}
-
-.score-item .date {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 3rem 1.5rem;
-  color: var(--text-secondary);
-  font-size: 1rem;
-  line-height: 1.6;
-}
-
 /* Responsive modal */
 @media (min-width: 480px) {
   .modal-container {
     max-width: 420px;
-  }
-
-  .modal-container--wide {
-    max-width: 520px;
   }
 
   .modal-content {
@@ -674,12 +551,6 @@ input[type="text"]::placeholder {
   .modal-actions .btn {
     flex: 1;
     min-width: 120px;
-  }
-}
-
-@media (min-width: 768px) {
-  .modal-container--wide {
-    max-width: 600px;
   }
 }
 
@@ -739,6 +610,35 @@ input[type="text"]::placeholder {
 .game-card[data-game="breakout"]:hover {
   border-color: #4ecdc4;
   box-shadow: 0 12px 32px rgba(78, 205, 196, 0.3);
+}
+
+.menu-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.game-card-focused {
+  transform: translateY(-8px);
+}
+
+.game-card-focused[data-game="snake"] {
+  border-color: #2ea44f;
+  box-shadow: 0 12px 32px rgba(46, 164, 79, 0.4), 0 0 0 3px rgba(46, 164, 79, 0.3);
+}
+
+.game-card-focused[data-game="tanks"] {
+  border-color: #ff6b6b;
+  box-shadow: 0 12px 32px rgba(255, 107, 107, 0.4), 0 0 0 3px rgba(255, 107, 107, 0.3);
+}
+
+.game-card-focused[data-game="breakout"] {
+  border-color: #4ecdc4;
+  box-shadow: 0 12px 32px rgba(78, 205, 196, 0.4), 0 0 0 3px rgba(78, 205, 196, 0.3);
 }
 
 .game-icon {
@@ -936,7 +836,6 @@ input[type="text"]::placeholder {
   touch-action: none;
 }
 
-/* Game cards - larger touch targets for mobile */
 @media (max-width: 768px) {
   .game-card {
     padding: 2rem 1.5rem;
@@ -946,11 +845,15 @@ input[type="text"]::placeholder {
   .game-card .btn-play {
     padding: 1rem 2rem;
     font-size: 1.125rem;
-    min-height: 48px; /* WCAG touch target size */
+    min-height: 48px;
   }
 
   .game-icon {
     font-size: 4rem;
+  }
+
+  .menu-hint {
+    display: none;
   }
 
   /* Make canvas fit mobile screens better */
@@ -995,15 +898,6 @@ input[type="text"]::placeholder {
     text-align: center;
   }
 
-  .header-actions {
-    width: 100%;
-    flex-direction: column;
-  }
-
-  .btn-header {
-    width: 100%;
-  }
-
   .input-group {
     flex-direction: column;
   }
@@ -1038,10 +932,6 @@ input[type="text"]::placeholder {
 
   .modal-actions .btn {
     width: 100%;
-  }
-
-  .score-item .date {
-    display: none;
   }
 
   .controls-hint {

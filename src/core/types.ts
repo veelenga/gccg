@@ -1,5 +1,3 @@
-// Core types used across all games
-
 export interface Position {
   x: number;
   y: number;
@@ -27,7 +25,6 @@ export const CellType = {
   EMPTY: 'EMPTY',
   OBSTACLE: 'OBSTACLE',
   PLAYABLE: 'PLAYABLE',
-  BLOCK: 'BLOCK',
 } as const;
 
 export type CellType = (typeof CellType)[keyof typeof CellType];
@@ -36,7 +33,6 @@ export interface GridCell {
   position: Position;
   type: CellType;
   level: number; // 0-4 for visual intensity
-  data?: unknown; // Game-specific data
 }
 
 export interface GridConfig {
@@ -55,7 +51,7 @@ export const GameType = {
 export type GameType = (typeof GameType)[keyof typeof GameType];
 
 export interface GameInput {
-  type: 'direction' | 'action';
+  type: 'direction' | 'action' | 'release';
   direction?: Direction;
   action?: string;
 }
