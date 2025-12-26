@@ -474,6 +474,10 @@ export class UI {
     this.game.setOnScoreChange((score) => this.updateScore(score));
     this.game.setOnGameOver((score) => this.handleGameOver(score));
     this.game.setOnStateChange((state) => this.handleStateChange(state));
+
+    if (this.game instanceof SnakeGame) {
+      this.game.setOnSpeedChange((speed) => this.updateSpeed(speed));
+    }
   }
 
   private updateScore(score: number): void {

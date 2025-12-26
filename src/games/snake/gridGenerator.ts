@@ -38,9 +38,9 @@ export function generateSnakeGrid(): Grid {
 
 function getSnakeContributionLevel(): number {
   const random = Math.random();
-  if (random < 0.1) return 0;
-  if (random < 0.25) return 1;
-  if (random < 0.5) return 2;
-  if (random < 0.75) return 3;
+  if (random < 0.35) return 0;
+  if (random < 0.50) return 1;
+  if (random < 0.70) return 2;
+  if (random < 0.88) return 3;
   return 4;
 }

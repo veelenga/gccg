@@ -7,7 +7,7 @@ import {
   INITIAL_SPEED,
   MIN_SPEED,
   SPEED_INCREMENT,
-  SCORE_PER_FOOD,
+  SCORE_PER_LEVEL,
   INITIAL_FOOD_COUNT,
   MAX_FOOD_ON_BOARD,
 } from './constants';
@@ -86,9 +86,12 @@ export class SnakeGame extends BaseGame {
     const headKey = this.positionToKey(head);
 
     if (this.foodSquares.has(headKey)) {
+      const cell = this.grid.getCellAt(head);
+      const level = cell?.level ?? 1;
+
       this.foodSquares.delete(headKey);
       this.snake.grow();
-      this.increaseScore();
+      this.increaseScore(level);
       this.increaseSpeed();
 
       if (this.foodSquares.size < MAX_FOOD_ON_BOARD) {
@@ -97,8 +100,9 @@ export class SnakeGame extends BaseGame {
     }
   }
 
-  private increaseScore(): void {
-    this.updateScore(this.score + SCORE_PER_FOOD);
+  private increaseScore(level: number): void {
+    const points = SCORE_PER_LEVEL[level] ?? SCORE_PER_LEVEL[1];
+    this.updateScore(this.score + points);
   }
 
   private increaseSpeed(): void {

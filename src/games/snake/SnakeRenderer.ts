@@ -56,25 +56,22 @@ export class SnakeRenderer extends BaseRenderer {
     const time = this.renderTime / 1000;
     const pulse = Math.sin(time * 4) * 0.3 + 0.7;
 
-    this.ctx.fillStyle = COLOR_LEVELS[level];
-    this.ctx.beginPath();
-    this.ctx.roundRect(x, y, size, size, radius);
-    this.ctx.fill();
+    const foodColors = ['#ffd700', '#ffcc00', '#ffaa00', '#ff9500', '#ff8800'];
+    const baseColor = foodColors[level] || foodColors[1];
 
     this.ctx.save();
-    this.ctx.shadowBlur = 15 * pulse;
-    this.ctx.shadowColor = '#ffd700';
+    this.ctx.shadowBlur = 12 + 8 * pulse;
+    this.ctx.shadowColor = baseColor;
 
-    this.ctx.fillStyle = `rgba(255, 215, 0, ${0.4 * pulse})`;
+    this.ctx.fillStyle = baseColor;
     this.ctx.beginPath();
     this.ctx.roundRect(x, y, size, size, radius);
     this.ctx.fill();
 
-    this.ctx.strokeStyle = `rgba(255, 238, 102, ${0.6 + pulse * 0.4})`;
-    this.ctx.lineWidth = 2;
+    this.ctx.fillStyle = `rgba(255, 255, 255, ${0.3 * pulse})`;
     this.ctx.beginPath();
-    this.ctx.roundRect(x + 1, y + 1, size - 2, size - 2, radius);
-    this.ctx.stroke();
+    this.ctx.roundRect(x + 2, y + 2, size - 4, size / 2 - 2, radius);
+    this.ctx.fill();
 
     this.ctx.restore();
   }
