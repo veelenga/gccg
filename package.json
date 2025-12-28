@@ -1,12 +1,13 @@
 {
-  "name": "ghc-snake",
+  "name": "gccg",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "tsc --noEmit"
   },
   "devDependencies": {
     "typescript": "~5.9.3",

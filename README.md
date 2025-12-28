@@ -1,7 +1,7 @@
-# GitHub Contributions Games
+# GitHub Contributions Calendar Games
 
-Generate Github contribution graph and choose your game:
+### Snake
 
-- Snake
-- Battle City
-- Breakout
+### Battle City
+
+### Breakout
