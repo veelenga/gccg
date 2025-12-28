@@ -29,30 +29,12 @@ export function generateShareText(data: ShareData): string {
 }
 
 /**
- * Shares score to Twitter using Web Share API with fallback to Twitter intent.
+ * Shares score to Twitter/X using Twitter intent URL.
  */
 export function shareToTwitter(data: ShareData): void {
   const text = generateShareText(data);
   const url = data.url || window.location.href;
-
-  // Try Web Share API first (mobile-friendly)
-  if (navigator.share) {
-    navigator
-      .share({
-        title: `${GAME_NAMES[data.gameType]} Score`,
-        text: text,
-        url: url,
-      })
-      .catch((error) => {
-        // User cancelled or error occurred, fallback to Twitter intent
-        if (error.name !== 'AbortError') {
-          openTwitterIntent(text, url);
-        }
-      });
-  } else {
-    // Desktop: use Twitter intent URL
-    openTwitterIntent(text, url);
-  }
+  openTwitterIntent(text, url);
 }
 
 function openTwitterIntent(text: string, url: string): void {
